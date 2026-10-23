@@ -1,0 +1,39 @@
+services:
+  manual-browser:
+    profiles: [manual]
+    build:
+      context: .
+      dockerfile: Dockerfile.manual
+    init: true
+    environment:
+      GOOGLE_LENS_PROFILE_DIR: /profile
+      VNC_PASSWORD: ${GOOGLE_LENS_VNC_PASSWORD:-}
+    ports:
+      - 100.90.124.33:6080:6080
+    volumes:
+      - ${GOOGLE_LENS_PROFILE_HOST_PATH:-./profile}:/profile
+
+  google-lens-worker:
+    build: .
+    init: true
+    restart: unless-stopped
+    environment:
+      GOOGLE_LENS_WORKER_TOKEN: ${GOOGLE_LENS_WORKER_TOKEN:?Set GOOGLE_LENS_WORKER_TOKEN in .env}
+      GOOGLE_LENS_PROFILE_DIR: /profile
+      GOOGLE_LENS_CHROMIUM: /usr/bin/chromium
+      GOOGLE_LENS_HEADLESS: "false"
+      VNC_PASSWORD: ${GOOGLE_LENS_VNC_PASSWORD:?Set GOOGLE_LENS_VNC_PASSWORD in .env}
+    ports:
+      - 127.0.0.1:8787:8787
+      - 100.90.124.33:6080:6080
+    volumes:
+      - ${GOOGLE_LENS_PROFILE_HOST_PATH:-./profile}:/profile
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - google-lens-worker

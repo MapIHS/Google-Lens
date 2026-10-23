@@ -1,0 +1,5 @@
+fastapi>=0.115,<1
+Pillow>=11,<13
+playwright>=1.50,<2
+playwright-stealth>=2,<3
+uvicorn[standard]>=0.34,<1
